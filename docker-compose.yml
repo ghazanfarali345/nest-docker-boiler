@@ -2,10 +2,32 @@ version: '3.9'
 
 services:
   api:
-    container_name: node-docker-container
-    build: .
-    ports:
-      - 3000:3000
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      target: development
+    command: npm run start:dev 
     volumes:
-      - ./:/app
-      - /app/node_modules
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - mongodb-primary
+    ports:
+      - '3000:3000'
+
+  mongodb-primary:
+    image: docker.io/bitnami/mongodb:5.0
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=mongodb-primary
+      - MONGODB_REPLICA_SET_MODE=primary
+      - MONGODB_ROOT_PASSWORD=password123
+      - MONGODB_REPLICA_SET_KEY=replicasetkey123
+    volumes:
+      - 'mongodb_master_data:/bitnami/mongodb'
+    ports:
+      - '27017:27017'
+    
+
+volumes:
+  mongodb_master_data:
+      driver: local

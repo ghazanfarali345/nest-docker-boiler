@@ -1,12 +1,43 @@
-FROM node:18
+# FROM node:18
 
-WORKDIR /app
+# WORKDIR /app
 
 
-COPY ./package.json ./package.json
+# COPY ./package.json ./package.json
 
-RUN npm install --legacy-peer-deps
+# RUN npm install --legacy-peer-deps
+
+# COPY . .
+
+# RUN npm run build
+
+# CMD ["node", "dist/src/main.js"]
+
+FROM node:alpine As development
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN npm install
 
 COPY . .
 
-CMD ["node", "dist/src/main.js"]
+RUN npm run build
+
+FROM node:alpine as production
+
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN npm install --only=production
+
+COPY . .
+
+COPY --from=development /usr/src/app/dist ./dist
+
+CMD ["node", "dist/apps/user/main"]
