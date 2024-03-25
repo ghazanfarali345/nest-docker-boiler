@@ -6,28 +6,38 @@ services:
       context: .
       dockerfile: ./Dockerfile
       target: development
-    command: npm run start:dev 
+    command: npm run start:dev
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-    depends_on:
-      - mongodb-primary
+    # depends_on:
+    #   - mongodb-primary
     ports:
       - '3000:3000'
+    develop:
+      watch:
+        - action: sync
+          path: ./app
+          target: /src/app
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: package.json\
+  mongo:
+    image: mongo
 
-  mongodb-primary:
-    image: docker.io/bitnami/mongodb:5.0
-    environment:
-      - MONGODB_ADVERTISED_HOSTNAME=mongodb-primary
-      - MONGODB_REPLICA_SET_MODE=primary
-      - MONGODB_ROOT_PASSWORD=password123
-      - MONGODB_REPLICA_SET_KEY=replicasetkey123
-    volumes:
-      - 'mongodb_master_data:/bitnami/mongodb'
-    ports:
-      - '27017:27017'
-    
+  # mongodb-primary:
+  #   image: docker.io/bitnami/mongodb:5.0
+  #   environment:
+  #     - MONGODB_ADVERTISED_HOSTNAME=mongodb-primary
+  #     - MONGODB_REPLICA_SET_MODE=primary
+  #     - MONGODB_ROOT_PASSWORD=password123
+  #     - MONGODB_REPLICA_SET_KEY=replicasetkey123
+  #   volumes:
+  #     - 'mongodb_master_data:/bitnami/mongodb'
+  #   ports:
+  #     - '27017:27017'
+# volumes:
+#   mongodb_master_data:
+#     driver: local
 
-volumes:
-  mongodb_master_data:
-      driver: local

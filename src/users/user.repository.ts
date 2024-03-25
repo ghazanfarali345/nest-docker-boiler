@@ -10,5 +10,6 @@ export class UserRepository extends AbstractRepository<UserDocument> {
 
   constructor(@InjectModel(UserDocument.name) userModel: Model<UserDocument>) {
     super(userModel);
+    console.log(UserDocument.name);
   }
 }
