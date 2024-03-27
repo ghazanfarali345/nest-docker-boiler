@@ -2,10 +2,8 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { AbstractDocument } from 'src/common/abstract.schema';
 
-// export type UserDocument = HydratedDocument<User>;
-
 @Schema({ timestamps: true })
-export class UserDocument extends AbstractDocument {
+export class User extends AbstractDocument {
   @Prop()
   fullName: string;
 
@@ -46,4 +44,4 @@ export class UserDocument extends AbstractDocument {
   deviceToken: string;
 }
 
-export const UserSchema = SchemaFactory.createForClass(UserDocument);
+export const UserSchema = SchemaFactory.createForClass(User);

@@ -2,34 +2,24 @@ import { Injectable, Logger } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { UserDocument } from './user.schema';
+import { User } from './user.schema';
 import { Model } from 'mongoose';
 import { UserRepository } from './user.repository';
 
 @Injectable()
 export class UsersService {
-  // protected readonly Logger: Logger;
+  protected readonly Logger: Logger;
 
-  // constructor(private readonly userRepository: UserRepository) {}
+  constructor(private readonly userRepository: UserRepository) {}
 
   async create(createUserDto: CreateUserDto) {
-    // let user = await this.userRepository.create({
-    //   fullName: 'ghazanfar',
-    //   deviceToken: 'assa',
-    //   email: 'asa@gmail.com',
-    //   isDeleted: false,
-    //   isVerified: false,
-    //   password: 'abc',
-    //   phoneNo: 'adfad',
-    //   otp: '1211',
-    //   profileImage: '121',
-    //   role: 'user',
-    //   pushNotificationEnabled: false,
-    //   status: 'ACTIVE',
-    //   stripeCustomerId: 'asdfad',
-    // });
+    let user = await this.userRepository.create(createUserDto);
 
-    return 'user';
+    return {
+      success: true,
+      message: 'User is created successfully',
+      data: user,
+    };
   }
 
   findAll() {
