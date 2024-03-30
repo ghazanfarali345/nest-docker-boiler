@@ -17,8 +17,8 @@ export class CreateUserDto {
   @IsPhoneNumber()
   phoneNo: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   profileImage?: string;
 
   @IsEmail()
@@ -44,4 +44,8 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   deviceToken: string;
+
+  @IsOptional()
+  @IsString()
+  otp: string;
 }

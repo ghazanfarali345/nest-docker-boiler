@@ -19,7 +19,7 @@ export class User extends AbstractDocument {
   @Prop({ required: true })
   password: string;
 
-  @Prop({})
+  @Prop({ default: true })
   pushNotificationEnabled: boolean;
 
   @Prop({ enum: ['USER', 'ADMIN'], default: 'USER' })
@@ -31,16 +31,16 @@ export class User extends AbstractDocument {
   @Prop({ default: false })
   isVerified: boolean;
 
-  @Prop({ required: true })
+  @Prop({ default: '' })
   otp: string;
 
   @Prop({ enum: ['ACTIVE', 'INACTIVE'], default: 'ACTIVE' })
   status: string;
 
-  @Prop()
+  @Prop({ required: true, default: '' })
   stripeCustomerId: string;
 
-  @Prop()
+  @Prop({ required: true })
   deviceToken: string;
 }
 

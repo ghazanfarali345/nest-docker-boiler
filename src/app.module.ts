@@ -11,7 +11,6 @@ import { MongooseModule } from '@nestjs/mongoose';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      // load: [firebaseConfig],
       envFilePath: '.env',
     }),
     JwtModule.register({
@@ -19,23 +18,23 @@ import { MongooseModule } from '@nestjs/mongoose';
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1d' },
     }),
-    // MailerModule.forRoot({
-    //   transport: {
-    //     host: process.env.EMAIL_HOST,
-    //     port: process.env.EMAIL_PORT as unknown as number,
-    //     secure: false, // true for 465, false for other ports
-    //     auth: {
-    //       user: process.env.EMAIL_ID, // generated ethereal user
-    //       pass: process.env.EMAIL_PASS, // generated ethereal password
-    //     },
-    //   },
-    //   defaults: {
-    //     from: '"nest-modules" <user@gmail.com>', // outgoing email ID
-    //   },
-    // }),
+    MailerModule.forRoot({
+      transport: {
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT as unknown as number,
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: process.env.EMAIL_ID, // generated ethereal user
+          pass: process.env.EMAIL_PASS, // generated ethereal password
+        },
+      },
+      defaults: {
+        from: '"nest-modules" <user@gmail.com>', // outgoing email ID
+      },
+    }),
 
     MongooseModule.forRoot(
-      process.env.NODE_ENV === 'development'
+      process.env.NODE_ENV !== 'production'
         ? process.env.MONGO_URL
         : process.env.MONGO_URL_ATLAS,
     ),
