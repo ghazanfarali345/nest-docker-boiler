@@ -12,7 +12,11 @@ import Omit from 'src/utils/omit';
 import { VerifyUserDTO } from './dto/verify-user.dto';
 import { Utils } from 'src/utils/utils';
 import { SendOtpDTO } from './dto/send-otp.user';
-import { SendOtpTypeEnum } from './enums';
+import { ResetPasswordTypeEnum, SendOtpTypeEnum } from './enums';
+import { ResetPasswordDTO } from './dto/reset-password.dto';
+import { LoginDTO } from './dto/login-user.dto';
+import { LogoutDTO } from './dto/logout.dto';
+import { IGetUserAuthInfoRequest } from 'src/interfaces';
 
 @Injectable()
 export class UsersService {
@@ -157,40 +161,80 @@ export class UsersService {
     };
   }
 
-  async sendOTP(SendOtpDTO: SendOtpDTO) {
-    let user: any = await this.userRepository.userModel
-      .findOne({
-        email: SendOtpDTO.email,
-      })
-      .lean();
+  async login(userData: LoginDTO) {
+    let user: any = await this.userRepository.findOne({
+      email: userData.email,
+    });
 
     if (!user)
       throw new HttpException(
-        { status: HttpStatus.BAD_REQUEST, error: 'User not found' },
+        {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'Invalid credentials',
+          success: false,
+        },
         HttpStatus.BAD_REQUEST,
       );
 
-    const otp = Utils.OTPGenerator();
+    if (user.status === 'INACTIVE') {
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'Admin has banned you, kindly contact with support',
+          success: false,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
-    this.mailerService.sendMail({
-      to: SendOtpDTO.email, // List of receivers email address
-      from: 'nodeboiler@example.com', // Senders email address
-      subject: 'Registration Otp', // Subject line
-      text: 'welcome', // plaintext body
-      html: `<b>Your registration otp is: ${otp}</b>`, // HTML body content
+    if (user.isDeleted === true) {
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'You have deactivated your account',
+          success: false,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const password = await bcryptjs.compare(userData.password, user.password);
+
+    if (!password) {
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'Invalid credentials',
+          success: false,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const payload = {
+      _id: user._id,
+      email: user.email,
+      fullName: user.fullName,
+    };
+
+    const token = this.jwtService.sign(payload, {
+      secret: process.env.JWT_SECRET,
     });
 
-    const updateUser = await this.userRepository.findOneAndUpdate(
-      { email: SendOtpDTO.email },
+    user = Omit(user, ['password', 'otp', '__v']);
+
+    this.userRepository.findOneAndUpdate(
+      { _id: user._id },
       {
-        otp,
+        deviceToken: userData.deviceToken,
       },
     );
 
     return {
       success: true,
-      message: 'Otp sent successfully',
-      data: null,
+      message: 'Login successful',
+      data: user,
+      token: token as any,
     };
   }
 
@@ -244,10 +288,110 @@ export class UsersService {
   }
 
   // for forgot password
-  resetPassword() {}
+  async resetPassword(body: ResetPasswordDTO) {
+    let updatedUser;
+
+    if (body.password !== body.confirmPassword) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: 'New password and confirm password must be same',
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    if (body.type === ResetPasswordTypeEnum.RESET_PASSWORD) {
+      const user: any = await this.userRepository.findOne({
+        email: body.email,
+      });
+      console.log({ user });
+
+      if (!user)
+        throw new HttpException(
+          { status: HttpStatus.BAD_REQUEST, error: 'Email not found' },
+          HttpStatus.BAD_REQUEST,
+        );
+
+      const password = await bcryptjs.compare(body.password, user.password);
+
+      if (password)
+        throw new HttpException(
+          {
+            status: HttpStatus.FORBIDDEN,
+            error: 'New password must be different from old password',
+          },
+          HttpStatus.FORBIDDEN,
+        );
+
+      const hashedPassword = await this.hashPassword(body.password);
+
+      updatedUser = await this.userRepository.findOneAndUpdate(
+        { email: body.email },
+        { password: hashedPassword },
+      );
+    }
+
+    if (updatedUser) {
+      return {
+        success: true,
+        message: 'Password updated successfully',
+        data: null,
+      };
+    }
+  }
 
   // for change password from settings
-  changePassword() {}
+  async changePassword(body: ResetPasswordDTO) {
+    let updatedUser;
+    if (body.type === ResetPasswordTypeEnum.CHANGE_PASSWORD) {
+      const user: any = await this.userRepository.findOne({
+        email: body.email,
+      });
+      const password = await bcryptjs.compare(body.oldPassword, user.password);
+
+      if (!password)
+        throw new HttpException(
+          {
+            status: HttpStatus.FORBIDDEN,
+            error: 'Old password is not correct',
+          },
+          HttpStatus.FORBIDDEN,
+        );
+
+      const hashedPassword = await this.hashPassword(body.password);
+
+      updatedUser = await this.userRepository.findOneAndUpdate(
+        { email: body.email },
+        { password: hashedPassword },
+      );
+    }
+
+    if (updatedUser) {
+      return {
+        success: true,
+        message: 'Password updated successfully',
+        data: null,
+      };
+    }
+  }
+
+  async logout(req: IGetUserAuthInfoRequest, data: LogoutDTO) {
+    const tok = await this.userRepository.findOneAndUpdate(
+      {
+        _id: req.user._id,
+        deviceToken: data.deviceToken,
+      },
+      {
+        deviceToken: '',
+      },
+    );
+
+    return {
+      success: true,
+      message: 'User logged out successfully',
+      data: null,
+    };
+  }
 
   findAll() {
     return `This action returns all users`;
