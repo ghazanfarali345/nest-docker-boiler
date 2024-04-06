@@ -17,6 +17,7 @@ import { ResetPasswordDTO } from './dto/reset-password.dto';
 import { LoginDTO } from './dto/login-user.dto';
 import { LogoutDTO } from './dto/logout.dto';
 import { IGetUserAuthInfoRequest } from 'src/interfaces';
+import { PaymentGatewayService } from 'src/payment-gateway/payment-gateway.service';
 
 @Injectable()
 export class UsersService {
@@ -26,6 +27,7 @@ export class UsersService {
     private readonly userRepository: UserRepository,
     private jwtService: JwtService,
     private readonly mailerService: MailerService,
+    private readonly paymentService: PaymentGatewayService,
   ) {}
 
   async hashPassword(password: string): Promise<string> {
@@ -56,6 +58,27 @@ export class UsersService {
 
     let user: any = await this.userRepository.create(createUserDto);
 
+    let stripeCustomerId = await this.paymentService.createCustomer({
+      _id: user._id,
+      name: user.fullName,
+      email: user.email,
+    });
+
+    let updatedUser = await this.userRepository.userModel.findOneAndUpdate(
+      { _id: user._id },
+      {
+        stripeCustomerId: stripeCustomerId.id,
+      },
+      {
+        new: true,
+        projection: {
+          password: 0,
+          otp: 0,
+          __v: 0,
+        },
+      },
+    );
+
     if (!user)
       throw new HttpException(
         {
@@ -82,12 +105,12 @@ export class UsersService {
         console.log(err);
       });
 
-    user = Omit(user, ['password', 'otp', '__v']);
+    // user = Omit(updatedUser, ['password', 'otp', '__v']);
 
     return {
       success: true,
       message: 'User is created successfully',
-      data: user,
+      data: updatedUser,
     };
   }
 

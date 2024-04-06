@@ -37,7 +37,7 @@ export class User extends AbstractDocument {
   @Prop({ enum: ['ACTIVE', 'INACTIVE'], default: 'ACTIVE' })
   status: string;
 
-  @Prop({ required: true, default: '' })
+  @Prop({ default: '' })
   stripeCustomerId: string;
 
   @Prop({ required: true })

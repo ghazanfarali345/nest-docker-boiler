@@ -9,8 +9,10 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { StaticContentModule } from './static-content/static-content.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { PaymentGatewayModule } from './payment-gateway/payment-gateway.module';
 @Module({
   imports: [
+    PaymentGatewayModule.forRootAsync(),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -45,6 +47,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     UsersModule,
     StaticContentModule,
     NotificationsModule,
+    // PaymentGatewayModule,
   ],
   controllers: [AppController],
   providers: [AppService],

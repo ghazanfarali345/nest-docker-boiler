@@ -39,10 +39,6 @@ export class CreateUserDto {
 
   @IsString()
   @IsNotEmpty()
-  stripeCustomerId: string;
-
-  @IsString()
-  @IsNotEmpty()
   deviceToken: string;
 
   @IsOptional()
